@@ -344,19 +344,31 @@
 
         // Function to delete a development task
         function deleteDevelopmentTask(index) {
+            // Show the confirmation modal
             $('#confirmationModal').modal('show');
 
+            // Store the index of the task to be deleted
+            var taskIndexToDelete = index;
+
             // Set up event listener for the confirm delete button in the modal
-            $('#confirmDeleteButton').on('click', function() {
+            $('#confirmDeleteButton').off().on('click', function() {
+                // Retrieve the work log from localStorage
                 var workLog = JSON.parse(localStorage.getItem("developerWorkLog")) || [];
-                workLog.splice(index, 1);
+
+                // Remove the task at the specified index
+                workLog.splice(taskIndexToDelete, 1);
+
+                // Save the updated work log to localStorage
                 localStorage.setItem("developerWorkLog", JSON.stringify(workLog));
+
+                // Refresh the display of the work log
                 displayWorkLog();
 
                 // Hide the modal after the task is deleted
                 $('#confirmationModal').modal('hide');
             });
         }
+
 
         // Function to clear all development tasks
         function clearAll() {
