@@ -75,6 +75,11 @@
         .modal-title-dark {
             color: #ffffff;
         }
+
+        .strikethrough {
+            text-decoration: line-through;
+            color: #c0c0c0 !important;
+        }
     </style>
 </head>
 
@@ -126,6 +131,7 @@
             <table class="table table-dark table-striped">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Task Description</th>
                         <th>Duration</th>
                         <th class="actions-column">Actions</th>
@@ -219,36 +225,33 @@
                 return;
             }
 
-            // Retrieve existing work log from localStorage or initialize an empty array
             var workLog = JSON.parse(localStorage.getItem("developerWorkLog")) || [];
 
             if (modifyingIndex === -1) {
-                // Add a new development task to the log
                 workLog.push({
                     developmentTask: developmentTask,
-                    duration: hours * 60 + minutes
+                    duration: hours * 60 + minutes,
+                    completed: false // Initialize as not completed
                 });
             } else {
-                // Update the existing development task in the log
                 workLog[modifyingIndex] = {
                     developmentTask: developmentTask,
-                    duration: hours * 60 + minutes
+                    duration: hours * 60 + minutes,
+                    completed: workLog[modifyingIndex].completed // Preserve existing completion state
                 };
-                modifyingIndex = -1; // Reset modifying index
-                $("#addUpdateButton").text("Add Task"); // Change button text back to "Add Task"
+                modifyingIndex = -1;
+                $("#addUpdateButton").text("Add Task");
             }
 
-            // Save the updated work log to localStorage
             localStorage.setItem("developerWorkLog", JSON.stringify(workLog));
 
-            // Clear input fields
             developmentTaskInput.val("");
             hoursInput.val("");
             minutesInput.val("");
 
-            // Refresh the work log display
             displayWorkLog();
         }
+
 
         // Function to display the work log
         function displayWorkLog() {
@@ -263,12 +266,31 @@
 
             workLog.forEach(function (item, index) {
                 var row = $("<tr>");
-                $("<td>").text(item.developmentTask).appendTo(row);
 
+                // Add checkbox at the beginning of the row
+                var checkboxCell = $("<td>");
+                var checkbox = $("<input>").attr("type", "checkbox").addClass("form-check-input").on("change", function () {
+                    toggleTaskCompletion(index, this.checked);
+                });
+                if (item.completed) {
+                    checkbox.prop("checked", true);
+                }
+                checkbox.appendTo(checkboxCell);
+                checkboxCell.appendTo(row);
+
+                // Add task description
+                var taskDescription = $("<td>").text(item.developmentTask);
+                if (item.completed) {
+                    taskDescription.addClass("strikethrough");
+                }
+                taskDescription.appendTo(row);
+
+                // Add duration
                 var hours = Math.floor(item.duration / 60);
                 var minutes = item.duration % 60;
                 $("<td>").text(hours + "h " + minutes + "m").appendTo(row);
 
+                // Add actions
                 var actionsCell = $("<td>");
                 $("<button>").text("Modify").addClass("btn btn-primary btn-sm me-1").on("click", function () {
                     modifyDevelopmentTask(index);
@@ -279,6 +301,7 @@
                 }).appendTo(actionsCell);
 
                 actionsCell.appendTo(row);
+
                 row.appendTo(workLogBody);
 
                 totalMinutes += item.duration;
@@ -302,6 +325,14 @@
             totalDurationProgress.css("width", totalMinutesPercent + "%");
             totalDurationProgress.text(totalMinutesPercent + "%");
             changeProgressBarColor(totalMinutesPercent, totalDurationProgress);
+        }
+
+        // Function to toggle task completion state
+        function toggleTaskCompletion(index, completed) {
+            var workLog = JSON.parse(localStorage.getItem("developerWorkLog")) || [];
+            workLog[index].completed = completed;
+            localStorage.setItem("developerWorkLog", JSON.stringify(workLog));
+            displayWorkLog();
         }
 
         // Function to change minute to hour,minute
